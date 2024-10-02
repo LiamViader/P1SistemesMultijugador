@@ -28,11 +28,14 @@ if (isset($parameters['page'])) {
     $sqlCheck = 'SELECT user_name FROM users WHERE user_name = :user_name';
 
     // verify longitude of password
+    $username = $parameters['user_name'];
     $password = $parameters['user_password'];
     $min_length = 8;
     $max_length = 128;
-    if (FALSE){// si l'usuari no és un correu
-
+    if (!filter_var($username, FILTER_VALIDATE_EMAIL)) {
+        // Si l'usuari no és un correu electrònic vàlid
+        $configuration['{FEEDBACK}'] = '<mark>ERROR: El nom d\'usuari ha de ser una adreça de correu electrònic vàlida.</mark>';
+        $crearUsuari = false;
     }
     else{
         $queryCheck = $db->prepare($sqlCheck);
