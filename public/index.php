@@ -25,7 +25,7 @@ if (isset($parameters['page'])) {
 } else if (isset($parameters['register'])) {
     $db = new PDO($db_connection);
     $sqlInsert = 'INSERT INTO users (user_name, user_password) VALUES (:user_name, :user_password)';
-    $sqlCheck = 'SELECT * FROM users WHERE user_name = :user_name';
+    $sqlCheck = 'SELECT user_name FROM users WHERE user_name = :user_name';
 
     // verify longitude of password
     $password = $parameters['user_password'];
@@ -36,11 +36,11 @@ if (isset($parameters['page'])) {
     }
     else{
         $queryCheck = $db->prepare($sqlCheck);
-        $queryCheck->bindValue(':user_name', $parameters['user_name']);
+        $username=$parameters['user_name'];
+        $queryCheck->bindValue(':user_name', $username);
         $queryCheck->execute();
-        echo "Número de usuarios encontrados: " . $queryCheck->rowCount() . "<br>";
-        echo "Buscando usuario: '" . $parameters['user_name'] . "'<br>";
-        if (TRUE){ // si l'usuari existeix
+        $result_row = $queryCheck->fetch(PDO::FETCH_ASSOC);
+        if ($result_row){ // si l'usuari existeix
             $configuration['{FEEDBACK}'] = '<mark>ERROR: L\'usuari ja existeix. Si us plau, escolliu un altre nom d\'usuari.</mark>';
         }
         else if (strlen($password) < $min_length || strlen($password) > $max_length) {
