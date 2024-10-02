@@ -11,11 +11,13 @@ $configuration = array(
     '{LOGIN_LOGOUT_URL}'  => '/?page=login',
     '{METHOD}'            => 'GET', // es veuen els paràmetres a l'URL i a la consola (???)
     '{REGISTER_URL}'      => '/?page=register',
-    '{SITE_NAME}'         => 'La meva pàgina'
+    '{SITE_NAME}'         => 'La meva pàgina',
+    '{CURRENT_USER_TEXT}'      => '',
+    '{REGISTER_TEXT}'     => 'Registrar-me'
 );
 
 $db = new PDO($db_connection);
-
+$current_user = null;
 if (isset($_COOKIE['session_id'])) { // Verificar si hi ha cookie de sessió
     $session_id = $_COOKIE['session_id'];
 
@@ -27,14 +29,18 @@ if (isset($_COOKIE['session_id'])) { // Verificar si hi ha cookie de sessió
     $result_row = $query->fetchObject();
 
     if ($result_row) {
-        // La sesión es válida
         $current_user = $result_row->user_name; // Almacena el nombre del usuario actual
+        $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
+        $configuration['{LOGIN_LOGOUT_URL}'] = '/?page=logout';
+        $configuration['{REGISTER_TEXT}'] = '';
+        $configuration['{CURRENT_USER_TEXT}'] = 'Sessió iniciada: ' . htmlentities($current_user);
     } else {
         // La sesión no es válida
         unset($_COOKIE['session_id']); // Eliminar la cookie
         setcookie('session_id', '', time() - 3600, "/", "", true, true);
         // Redirigir o mostrar un mensaje de error
         $configuration['{FEEDBACK}'] = "<mark>ERROR: La sessió s'ha acabat </mark>";
+        $current_user = null;
     }
 }
 
@@ -45,9 +51,11 @@ if (isset($parameters['page'])) {
         $template = 'register';
         $configuration['{REGISTER_USERNAME}'] = '';
         $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Ja tinc un compte';
-    } else if ($parameters['page'] == 'login') {
+    } else if ($parameters['page'] == 'login' && !$current_user) { // si login i sessio no iniciada
         $template = 'login';
         $configuration['{LOGIN_USERNAME}'] = '';
+    } else if($parameters['page'] == 'login'){ // si login i la sessió ja està iniciada
+        $template = 'home';
     } else if ($parameters['page'] == 'logout'){
         $session_id = $_COOKIE['session_id'];
         $sql = 'DELETE FROM sessions WHERE session_id = :session_id';
@@ -66,10 +74,13 @@ if (isset($parameters['page'])) {
     $sqlInsert = 'INSERT INTO users (user_name, user_password, verification_token, is_verified) VALUES (:user_name, :user_password, :verification_token, 0)';
     $sqlCheck = 'SELECT user_name FROM users WHERE user_name = :user_name';
 
-
+    
     $username = $parameters['user_name'];
     $password = $parameters['user_password'];
 
+    // to verify longitude of password
+    $min_length = 8;
+    $max_length = 128;
     if (!filter_var($username, FILTER_VALIDATE_EMAIL)) {
         // Si l'usuari no és un correu electrònic vàlid
         $configuration['{FEEDBACK}'] = '<mark>ERROR: El nom d\'usuari ha de ser una adreça de correu electrònic vàlida.</mark>';
@@ -84,10 +95,8 @@ if (isset($parameters['page'])) {
         if ($result_row){ // si l'usuari existeix
             $configuration['{FEEDBACK}'] = '<mark>ERROR: L\'usuari ja existeix. Si us plau, escolliu un altre nom d\'usuari.</mark>';
         }
-        else if (strlen($password) < $min_length || strlen($password) > $max_length) {    // verify longitude of password
+        else if (strlen($password) < $min_length || strlen($password) > $max_length) {
             // Mostrar missatge error si la contrasenya no cumpleix amb la mida correcta
-            $min_length = 8;
-            $max_length = 128;
             $configuration['{FEEDBACK}'] = '<mark>ERROR: La contrasenya ha de tenir entre ' . $min_length . ' i ' . $max_length . ' caràcters</mark>';
         }
         else{
@@ -98,7 +107,7 @@ if (isset($parameters['page'])) {
             $password_final = $salt . ':' . $hashed_password; // ajuntar amb el format 'sal:hash'
 
             $token = bin2hex(random_bytes(16)); // Genera un token aleatori per verificar a partir del correu
-
+            
             $query = $db->prepare($sqlInsert);
             $query->bindValue(':user_name', $parameters['user_name']);
             $query->bindValue(':user_password', $password_final);
@@ -106,7 +115,7 @@ if (isset($parameters['page'])) {
             if ($query->execute()) {
                 if (sendVerificationEmail($parameters['user_name'], $token)) { //enviar correu de verificació
                     $configuration['{FEEDBACK}'] = 'Verifica el correu <b>' . htmlentities($parameters['user_name']) . '</b>';
-                    $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
+                    $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Iniciar sessió';
                 } else {
                     $configuration['{FEEDBACK}'] = '<mark>ERROR: No s\'ha pogut enviar el correu de verificació.</mark>';
                 }
@@ -119,28 +128,36 @@ if (isset($parameters['page'])) {
     }
 } else if (isset($parameters['login'])) {
     $db = new PDO($db_connection);
-    $sql = 'SELECT user_password FROM users WHERE user_name = :user_name';
+    $sql = 'SELECT * FROM users WHERE user_name = :user_name';
     $query = $db->prepare($sql);
     $query->bindValue(':user_name', $parameters['user_name']);
     $query->execute();
-    $result_row = $query->fetchObject();
+    $result_row = $query->fetch(PDO::FETCH_ASSOC);
 
     if ($result_row) {
-        list($user_salt, $user_hash) = explode(':', $result_row->user_password); //separar sal i hash
+        list($user_salt, $user_hash) = explode(':', $result_row['user_password']); //separar sal i hash
         $input_hashed_password = hash_pbkdf2('sha256', $parameters['user_password'], $user_salt, 10000, 64); //tornar a fer hash
         if ($input_hashed_password === $user_hash){ //comprovar hash si son iguals
-            $session_id = bin2hex(random_bytes(32)); //generar id de la sessió
-            $sql = 'INSERT INTO sessions (session_id, user_name, created_at) VALUES (:session_id, :user_name, CURRENT_TIMESTAMP)';
-            $query = $db->prepare($sql);
-            $query->bindValue(':session_id', $session_id);
-            $query->bindValue(':user_name', $parameters['user_name']);
-            $query->execute();
+            if($result_row['is_verified']==1){//si ja ha verificat el correu
+                $session_id = bin2hex(random_bytes(32)); //generar id de la sessió
+                $sql = 'INSERT INTO sessions (session_id, user_name, created_at) VALUES (:session_id, :user_name, CURRENT_TIMESTAMP)';
+                $query = $db->prepare($sql);
+                $query->bindValue(':session_id', $session_id);
+                $query->bindValue(':user_name', $parameters['user_name']);
+                $query->execute();
 
-            setcookie('session_id', $session_id, time() + (86400), "/", "", true, true); // 1 dia de duració
+                setcookie('session_id', $session_id, time() + (86400), "/", "", true, true); // 1 dia de duració
 
-            $configuration['{FEEDBACK}'] = '"Sessió" iniciada com <b>' . htmlentities($parameters['user_name']) . '</b>';
-            $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar "sessió"';
-            $configuration['{LOGIN_LOGOUT_URL}'] = '/?page=logout';
+                $configuration['{CURRENT_USER_TEXT}'] = '"Sessió" iniciada com <b>' . htmlentities($parameters['user_name']) . '</b>';
+                $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
+                $configuration['{LOGIN_LOGOUT_URL}'] = '/?page=logout';
+                $configuration['{REGISTER_TEXT}'] = '';
+                echo $template;
+            }
+            else{
+                $configuration['{FEEDBACK}'] = '<mark>ERROR: Encara sha de verificar el correu</mark>';
+            }
+
         } else {
             $configuration['{FEEDBACK}'] = '<mark>ERROR: Usuari desconegut o contrasenya incorrecta</mark>';
         }
