@@ -1,2 +1,4 @@
 # ignorar carpeta PHP
 PHP/
+
+#ignorar users.db
