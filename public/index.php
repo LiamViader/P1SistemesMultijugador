@@ -24,7 +24,7 @@ if (isset($parameters['page'])) {
     }
 } else if (isset($parameters['register'])) {
     $db = new PDO($db_connection);
-    $sqlInsert = 'INSERT INTO users (user_name, user_password) VALUES (:user_name, :user_password)';
+    $sqlInsert = 'INSERT INTO users (user_name, user_password, verification_token, is_verified) VALUES (:user_name, :user_password, :verification_token, 0)';
     $sqlCheck = 'SELECT user_name FROM users WHERE user_name = :user_name';
 
     // verify longitude of password
@@ -56,11 +56,24 @@ if (isset($parameters['page'])) {
             $hashed_password = hash_pbkdf2('sha256', $password, $salt, 10000, 64); //fer hash
 
             $password_final = $salt . ':' . $hashed_password; // ajuntar amb el format 'sal:hash'
+            $token = bin2hex(random_bytes(16)); // Genera un token aleatori per verificar a partir del correu
             $query = $db->prepare($sqlInsert);
             $query->bindValue(':user_name', $parameters['user_name']);
             $query->bindValue(':user_password', $password_final);
+            $query->bindValue(':verification_token', $token);
             if ($query->execute()) {
-                $configuration['{FEEDBACK}'] = 'Creat el compte <b>' . htmlentities($parameters['user_name']) . '</b>';
+                //enviar mail
+                $to = $parameters['user_email'];
+                $subject = 'Verifica el teu compte';
+                $message = 'Si us plau, verifica el teu compte fent click al següent enllaç: ';
+                $message .= 'http://localhost:8000//verificar.php?token=' . $token;
+                $headers = 'From: no-reply@tu-sitio.com' . "\r\n" .
+                        'Reply-To: no-reply@tu-sitio.com' . "\r\n" .
+                        'X-Mailer: PHP/' . phpversion();
+
+                mail($to, $subject, $message, $headers);
+
+                $configuration['{FEEDBACK}'] = 'Verifica el correu <b>' . htmlentities($parameters['user_name']) . '</b>';
                 $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
             } else {
                 // Això no s'executarà mai (???)
