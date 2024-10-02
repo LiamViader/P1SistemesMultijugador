@@ -63,15 +63,15 @@ if (isset($parameters['page'])) {
             $query->bindValue(':verification_token', $token);
             if ($query->execute()) {
                 //enviar mail
-                $to = $parameters['user_email'];
-                $subject = 'Verifica el teu compte';
-                $message = 'Si us plau, verifica el teu compte fent click al següent enllaç: ';
-                $message .= 'http://localhost:8000//verificar.php?token=' . $token;
-                $headers = 'From: no-reply@tu-sitio.com' . "\r\n" .
-                        'Reply-To: no-reply@tu-sitio.com' . "\r\n" .
-                        'X-Mailer: PHP/' . phpversion();
+                //$to = $parameters['user_name'];
+                //$subject = 'Verifica el teu compte';
+                //$message = 'Si us plau, verifica el teu compte fent click al següent enllaç: ';
+                //$message .= 'http://localhost:8000//verificar.php?token=' . $token;
+                //$headers = 'From: no-reply@tu-sitio.com' . "\r\n" .
+                        //'Reply-To: no-reply@tu-sitio.com' . "\r\n" .
+                        //'X-Mailer: PHP/' . phpversion();
 
-                mail($to, $subject, $message, $headers);
+                //mail($to, $subject, $message, $headers);
 
                 $configuration['{FEEDBACK}'] = 'Verifica el correu <b>' . htmlentities($parameters['user_name']) . '</b>';
                 $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
