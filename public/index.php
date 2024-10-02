@@ -154,8 +154,12 @@ if (isset($parameters['page'])) {
                 $configuration['{REGISTER_TEXT}'] = '';
                 echo $template;
             }
-            else{
-                $configuration['{FEEDBACK}'] = '<mark>ERROR: Encara sha de verificar el correu</mark>';
+            else{ // si correu no verificat
+                if (sendVerificationEmail($result_row['user_name'], $result_row['verification_token'])) { //enviar un altre correu de correu de verificació
+                    $configuration['{FEEDBACK}'] = '<mark>ERROR: Encara sha de verificar el correu. sha tornat a enviar un correu a ' . $result_row['user_name'] . '</mark>';
+                } else {
+                    $configuration['{FEEDBACK}'] = '<mark>ERROR: Encara sha de verificar el correu. sha intentat enviar un correu a ' . $result_row['user_name'] . ' pero algo ha anat malament</mark>';
+                }
             }
 
         } else {
