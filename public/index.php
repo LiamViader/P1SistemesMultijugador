@@ -27,7 +27,11 @@ if (isset($parameters['page'])) {
     $sql = 'INSERT INTO users (user_name, user_password) VALUES (:user_name, :user_password)';
     $query = $db->prepare($sql);
     $query->bindValue(':user_name', $parameters['user_name']);
-    $query->bindValue(':user_password', $parameters['user_password']);
+    // HASH PASSWORD
+    $password = $parameters['user_password'];
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    $query->bindValue(':user_password', $hashed_password);
     if ($query->execute()) {
         $configuration['{FEEDBACK}'] = 'Creat el compte <b>' . htmlentities($parameters['user_name']) . '</b>';
         $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
