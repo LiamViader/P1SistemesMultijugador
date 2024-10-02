@@ -27,19 +27,35 @@ if (isset($parameters['page'])) {
     $sql = 'INSERT INTO users (user_name, user_password) VALUES (:user_name, :user_password)';
     $query = $db->prepare($sql);
     $query->bindValue(':user_name', $parameters['user_name']);
-    // HASH PASSWORD
+    // verify longitude of password
     $password = $parameters['user_password'];
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $min_length = 8;
+    $max_length = 128;
+    if (){// si l'usuari no és un correu
 
-    $query->bindValue(':user_password', $hashed_password);
-    if ($query->execute()) {
-        $configuration['{FEEDBACK}'] = 'Creat el compte <b>' . htmlentities($parameters['user_name']) . '</b>';
-        $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
-    } else {
-        // Això no s'executarà mai (???)
-        $configuration['{FEEDBACK}'] = "<mark>ERROR: No s'ha pogut crear el compte <b>"
-            . htmlentities($parameters['user_name']) . '</b></mark>';
     }
+    else if (){ // si l'usuari existeix
+
+    }
+    if (strlen($password) < $min_length || strlen($password) > $max_length) {
+        // Mostrar missatge error si la contrasenya no cumpleix amb la mida correcta
+        $configuration['{FEEDBACK}'] = '<mark>ERROR: La contrasenya ha de tenir entre ' . $min_length . ' i ' . $max_length . ' caràcters</mark>';
+    }
+    else{
+        // HASH PASSWORD
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        $query->bindValue(':user_password', $hashed_password);
+        if ($query->execute()) {
+            $configuration['{FEEDBACK}'] = 'Creat el compte <b>' . htmlentities($parameters['user_name']) . '</b>';
+            $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
+        } else {
+            // Això no s'executarà mai (???)
+            $configuration['{FEEDBACK}'] = "<mark>ERROR: No s'ha pogut crear el compte <b>"
+                . htmlentities($parameters['user_name']) . '</b></mark>';
+        }
+    }
+
 } else if (isset($parameters['login'])) {
     $db = new PDO($db_connection);
     $sql = 'SELECT * FROM users WHERE user_name = :user_name and user_password = :user_password';
