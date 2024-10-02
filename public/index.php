@@ -24,50 +24,66 @@ if (isset($parameters['page'])) {
     }
 } else if (isset($parameters['register'])) {
     $db = new PDO($db_connection);
-    $sql = 'INSERT INTO users (user_name, user_password) VALUES (:user_name, :user_password)';
-    $query = $db->prepare($sql);
-    $query->bindValue(':user_name', $parameters['user_name']);
+    $sqlInsert = 'INSERT INTO users (user_name, user_password) VALUES (:user_name, :user_password)';
+    $sqlCheck = 'SELECT * FROM users WHERE user_name = :user_name';
+
     // verify longitude of password
     $password = $parameters['user_password'];
     $min_length = 8;
     $max_length = 128;
-    if (){// si l'usuari no és un correu
+    if (FALSE){// si l'usuari no és un correu
 
-    }
-    else if (){ // si l'usuari existeix
-
-    }
-    if (strlen($password) < $min_length || strlen($password) > $max_length) {
-        // Mostrar missatge error si la contrasenya no cumpleix amb la mida correcta
-        $configuration['{FEEDBACK}'] = '<mark>ERROR: La contrasenya ha de tenir entre ' . $min_length . ' i ' . $max_length . ' caràcters</mark>';
     }
     else{
-        // HASH PASSWORD
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-        $query->bindValue(':user_password', $hashed_password);
-        if ($query->execute()) {
-            $configuration['{FEEDBACK}'] = 'Creat el compte <b>' . htmlentities($parameters['user_name']) . '</b>';
-            $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
-        } else {
-            // Això no s'executarà mai (???)
-            $configuration['{FEEDBACK}'] = "<mark>ERROR: No s'ha pogut crear el compte <b>"
-                . htmlentities($parameters['user_name']) . '</b></mark>';
+        $queryCheck = $db->prepare($sqlCheck);
+        $queryCheck->bindValue(':user_name', $parameters['user_name']);
+        $queryCheck->execute();
+        echo "Número de usuarios encontrados: " . $queryCheck->rowCount() . "<br>";
+        echo "Buscando usuario: '" . $parameters['user_name'] . "'<br>";
+        if (TRUE){ // si l'usuari existeix
+            $configuration['{FEEDBACK}'] = '<mark>ERROR: L\'usuari ja existeix. Si us plau, escolliu un altre nom d\'usuari.</mark>';
+        }
+        else if (strlen($password) < $min_length || strlen($password) > $max_length) {
+            // Mostrar missatge error si la contrasenya no cumpleix amb la mida correcta
+            $configuration['{FEEDBACK}'] = '<mark>ERROR: La contrasenya ha de tenir entre ' . $min_length . ' i ' . $max_length . ' caràcters</mark>';
+        }
+        else{
+            // HASH PASSWORD
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $query = $db->prepare($sqlInsert);
+            $query->bindValue(':user_name', $parameters['user_name']);
+            $query->bindValue(':user_password', $hashed_password);
+            if ($query->execute()) {
+                $configuration['{FEEDBACK}'] = 'Creat el compte <b>' . htmlentities($parameters['user_name']) . '</b>';
+                $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
+            } else {
+                // Això no s'executarà mai (???)
+                $configuration['{FEEDBACK}'] = "<mark>ERROR: No s'ha pogut crear el compte <b>"
+                    . htmlentities($parameters['user_name']) . '</b></mark>';
+            }
         }
     }
+    
 
 } else if (isset($parameters['login'])) {
     $db = new PDO($db_connection);
-    $sql = 'SELECT * FROM users WHERE user_name = :user_name and user_password = :user_password';
+    $sql = 'SELECT user_password FROM users WHERE user_name = :user_name';
     $query = $db->prepare($sql);
     $query->bindValue(':user_name', $parameters['user_name']);
-    $query->bindValue(':user_password', $parameters['user_password']);
     $query->execute();
     $result_row = $query->fetchObject();
+
     if ($result_row) {
-        $configuration['{FEEDBACK}'] = '"Sessió" iniciada com <b>' . htmlentities($parameters['user_name']) . '</b>';
-        $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar "sessió"';
-        $configuration['{LOGIN_LOGOUT_URL}'] = '/?page=logout';
+        list($user_salt, $user_hash) = explode(':', $result_row->user_password); //separar sal i hash
+        $input_hashed_password = hash_pbkdf2('sha256', $parameters['user_password'], $user_salt, 10000, 64); //tornar a fer hash
+        if ($input_hashed_password === $user_hash){ //comprovar hash si son iguals
+            $configuration['{FEEDBACK}'] = '"Sessió" iniciada com <b>' . htmlentities($parameters['user_name']) . '</b>';
+            $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar "sessió"';
+            $configuration['{LOGIN_LOGOUT_URL}'] = '/?page=logout';
+        } else {
+            $configuration['{FEEDBACK}'] = '<mark>ERROR: Usuari desconegut o contrasenya incorrecta</mark>';
+        }
+        
     } else {
         $configuration['{FEEDBACK}'] = '<mark>ERROR: Usuari desconegut o contrasenya incorrecta</mark>';
     }
