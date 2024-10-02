@@ -49,10 +49,13 @@ if (isset($parameters['page'])) {
         }
         else{
             // HASH PASSWORD
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $salt = bin2hex(random_bytes(16)); // crear sal aleatoria
+            $hashed_password = hash_pbkdf2('sha256', $password, $salt, 10000, 64); //fer hash
+
+            $password_final = $salt . ':' . $hashed_password; // ajuntar amb el format 'sal:hash'
             $query = $db->prepare($sqlInsert);
             $query->bindValue(':user_name', $parameters['user_name']);
-            $query->bindValue(':user_password', $hashed_password);
+            $query->bindValue(':user_password', $password_final);
             if ($query->execute()) {
                 $configuration['{FEEDBACK}'] = 'Creat el compte <b>' . htmlentities($parameters['user_name']) . '</b>';
                 $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
