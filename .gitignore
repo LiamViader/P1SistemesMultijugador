@@ -2,3 +2,4 @@
 PHP/
 
 #ignorar users.db
+private/users.db
