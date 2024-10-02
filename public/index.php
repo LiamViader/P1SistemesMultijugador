@@ -96,6 +96,15 @@ if (isset($parameters['page'])) {
         list($user_salt, $user_hash) = explode(':', $result_row->user_password); //separar sal i hash
         $input_hashed_password = hash_pbkdf2('sha256', $parameters['user_password'], $user_salt, 10000, 64); //tornar a fer hash
         if ($input_hashed_password === $user_hash){ //comprovar hash si son iguals
+            $session_id = bin2hex(random_bytes(32)); //generar id de la sessió
+            $sql = 'INSERT INTO sessions (session_id, user_name, created_at) VALUES (:session_id, :user_name, NOW())';
+            $query = $db->prepare($sql);
+            $query->bindValue(':session_id', $session_id);
+            $query->bindValue(':user_name', $parameters['user_name']);
+            $query->execute();
+
+            setcookie('session_id', $session_id, time() + (86400), "/", "", true, true); // 1 dia de duració
+
             $configuration['{FEEDBACK}'] = '"Sessió" iniciada com <b>' . htmlentities($parameters['user_name']) . '</b>';
             $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar "sessió"';
             $configuration['{LOGIN_LOGOUT_URL}'] = '/?page=logout';
