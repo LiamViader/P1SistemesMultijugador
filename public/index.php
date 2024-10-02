@@ -11,6 +11,31 @@ $configuration = array(
     '{REGISTER_URL}'      => '/?page=register',
     '{SITE_NAME}'         => 'La meva pàgina'
 );
+
+$db = new PDO($db_connection);
+
+if (isset($_COOKIE['session_id'])) { // Verificar si hi ha cookie de sessió
+    $session_id = $_COOKIE['session_id'];
+
+    // Consultar si la sessió es valida
+    $sql = 'SELECT user_name FROM sessions WHERE session_id = :session_id';
+    $query = $db->prepare($sql);
+    $query->bindValue(':session_id', $session_id);
+    $query->execute();
+    $result_row = $query->fetchObject();
+
+    if ($result_row) {
+        // La sesión es válida
+        $current_user = $result_row->user_name; // Almacena el nombre del usuario actual
+    } else {
+        // La sesión no es válida
+        unset($_COOKIE['session_id']); // Eliminar la cookie
+        setcookie('session_id', '', time() - 3600, "/", "", true, true);
+        // Redirigir o mostrar un mensaje de error
+        $configuration['{FEEDBACK}'] = "<mark>ERROR: La sessió s'ha acabat </mark>";
+    }
+}
+
 // parameter processing
 $parameters = $_GET;
 if (isset($parameters['page'])) {
@@ -21,6 +46,18 @@ if (isset($parameters['page'])) {
     } else if ($parameters['page'] == 'login') {
         $template = 'login';
         $configuration['{LOGIN_USERNAME}'] = '';
+    } else if ($parameters['page'] == 'logout'){
+        $session_id = $_COOKIE['session_id'];
+        $sql = 'DELETE FROM sessions WHERE session_id = :session_id';
+        $query = $db->prepare($sql);
+        $query->bindValue(':session_id', $session_id);
+        $query->execute();
+
+        unset($_COOKIE['session_id']);
+        setcookie('session_id', '', time() - 3600, "/", "", true, true);
+
+        header("Location: /?page=login");
+        exit;
     }
 } else if (isset($parameters['register'])) {
     $db = new PDO($db_connection);
@@ -82,8 +119,6 @@ if (isset($parameters['page'])) {
             }
         }
     }
-    
-
 } else if (isset($parameters['login'])) {
     $db = new PDO($db_connection);
     $sql = 'SELECT user_password FROM users WHERE user_name = :user_name';
@@ -97,7 +132,7 @@ if (isset($parameters['page'])) {
         $input_hashed_password = hash_pbkdf2('sha256', $parameters['user_password'], $user_salt, 10000, 64); //tornar a fer hash
         if ($input_hashed_password === $user_hash){ //comprovar hash si son iguals
             $session_id = bin2hex(random_bytes(32)); //generar id de la sessió
-            $sql = 'INSERT INTO sessions (session_id, user_name, created_at) VALUES (:session_id, :user_name, NOW())';
+            $sql = 'INSERT INTO sessions (session_id, user_name, created_at) VALUES (:session_id, :user_name, CURRENT_TIMESTAMP)';
             $query = $db->prepare($sql);
             $query->bindValue(':session_id', $session_id);
             $query->bindValue(':user_name', $parameters['user_name']);
