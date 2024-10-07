@@ -7,6 +7,7 @@ $configuration = array(
     '{FEEDBACK}'          => '',
     '{LOGIN_LOGOUT_TEXT}' => 'Identificar-me',
     '{LOGIN_LOGOUT_URL}'  => '/?page=login',
+    '{RECOVERY_URL}'      => '/?page=recovery',
     '{REGISTER_URL}'      => '/?page=register',
     '{SITE_NAME}'         => 'Verificacio correu',
     '{METHOD}'            => 'POST',

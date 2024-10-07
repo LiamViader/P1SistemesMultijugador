@@ -2,6 +2,19 @@
 
 require 'sendMail.php';
 
+$configuration = array(
+    '{FEEDBACK}'          => '',
+    '{LOGIN_USERNAME}'    => '',
+    '{LOGIN_LOGOUT_TEXT}' => 'Identificar-me',
+    '{LOGIN_LOGOUT_URL}'  => '/?page=login',
+    '{RECOVERY_URL}'      => '/?page=recovery',
+    '{REGISTER_URL}'      => '/?page=register',
+    '{SITE_NAME}'         => 'Reset',
+    '{METHOD}'            => 'POST',
+    
+);
+$template='reset_password';
+
 if (isset($_GET['token'])) {
     $token = $_GET['token'];
     //  validar el token
@@ -30,16 +43,14 @@ if (isset($_GET['token'])) {
             $queryDelete->bindValue(':token', $token);
             $queryDelete->execute();
 
-            echo "La teva contrasenya ha estat restablerta amb èxit.";
+            $configuration['{FEEDBACK}'] = "<mark>La teva contrasenya ha estat restablerta amb èxit. </mark>";
+            $template='login';
         }
-        // Formulari per restablir la contrasenya
-        echo '<form method="POST" action="">
-                <label for="new_password">Nova contrasenya:</label>
-                <input type="password" name="new_password" required>
-                <button type="submit" name="reset_password">Restablir contrasenya</button>
-              </form>';
     } else {
-        echo "El token és invàlid o ha expirat.";
+        $configuration['{FEEDBACK}'] = "<mark>El token és invàlid o ha expirat.</mark>";
     }
 }
+$html = file_get_contents('plantilla_' . $template . '.html', true);
+$html = str_replace(array_keys($configuration), array_values($configuration), $html);
+echo $html;
 ?>
