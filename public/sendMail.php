@@ -13,7 +13,7 @@ use PHPMailer\PHPMailer\Exception;
 function sendVerificationEmail($to, $token) {
     $subject = 'Verifica el teu compte';
     $message = 'Si us plau, verifica el teu compte fent click al següent enllaç: ';
-    $message .= 'http://localhost:8000/verifyMail.php?token=' . $token;
+    $message .= 'http://localhost:8000/verifyMail.php?token=' . $token; // Enllaç a la pàgina de verificació amb parametre token corresponent
 
     $mail = new PHPMailer(true);
 
@@ -37,7 +37,7 @@ function sendVerificationEmail($to, $token) {
         $mail->Body    = $message;
         $mail->AltBody = strip_tags($message); 
 
-        $mail->send(); // Envía el correu
+        $mail->send(); // Envia el correu
         return true;
     } catch (Exception $e) {
         echo 'El correu no sha pogut enviar. Error: ', $mail->ErrorInfo;

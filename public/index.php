@@ -164,7 +164,6 @@ if (isset($parameters['page'])) {
                 $configuration['{LOGIN_LOGOUT_TEXT}'] = 'Tancar sessió';
                 $configuration['{LOGIN_LOGOUT_URL}'] = '/?page=logout';
                 $configuration['{REGISTER_TEXT}'] = '';
-                echo $template;
             }
             else{ // si correu no verificat
                 if (sendVerificationEmail($result_row['user_name'], $result_row['verification_token'])) { //enviar un altre correu de correu de verificació

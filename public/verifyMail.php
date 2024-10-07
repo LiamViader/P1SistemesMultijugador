@@ -7,7 +7,6 @@ $configuration = array(
     '{FEEDBACK}'          => '',
     '{LOGIN_LOGOUT_TEXT}' => 'Identificar-me',
     '{LOGIN_LOGOUT_URL}'  => '/?page=login',
-    '{METHOD}'            => 'GET', // es veuen els paràmetres a l'URL i a la consola (???)
     '{REGISTER_URL}'      => '/?page=register',
     '{SITE_NAME}'         => 'Verificacio correu'
 );
