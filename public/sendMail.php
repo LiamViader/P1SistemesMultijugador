@@ -44,4 +44,39 @@ function sendVerificationEmail($to, $token) {
         return false; 
     }
 }
+
+
+function sendRecoverEmail($to, $token){
+    $subject = 'Reseteja la contrasenya';
+    $resetLink = "http://localhost:8000/resetPassword.php?token=$token";// Enllaç a la pàgina de recuperació amb parametre token corresponent
+    $message = "Recuperació de contrasenya". "Fes clic aquí per restablir la teva contrasenya: ". $resetLink;
+    $mail = new PHPMailer(true);
+
+    try {
+        // Configuracions del servidor smtp
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'multijugadorsistemes@gmail.com';
+        $mail->Password = 'wjirgwmdglxlytvl'; 
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+
+        // Receptors
+        $mail->setFrom('no-reply@tu-sistemesmultijugador.com', 'App Practica 1');
+        $mail->addAddress($to); //direccio
+
+        // Contingut del correu
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        $mail->AltBody = strip_tags($message); 
+
+        $mail->send(); // Envia el correu
+        return true;
+    } catch (Exception $e) {
+        echo 'El correu no sha pogut enviar. Error: ', $mail->ErrorInfo;
+        return false; 
+    }
+}
 ?>

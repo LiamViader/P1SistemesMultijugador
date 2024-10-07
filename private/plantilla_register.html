@@ -29,12 +29,14 @@
                 <header>
                     <h2>Crea un nou compte</h2>
                 </header>
-                <label for="register_username">Nom d'usuari</label>
+                <label for="register_username">Correu electrònic</label>
                 <input id="register_username" type="text" name="user_name" value="{REGISTER_USERNAME}" />
-                <label for="register_password">Contrasenya</label>
+                <label for="register_password">Contrasenya (>8 caracters)</label>
                 <input id="register_password" type="password" name="user_password" minlength="8" maxlength="128"/>
+                <label for="confirm_password">Confirma Contrasenya</label>
+                <input id="confirm_password" type="password" name="user_confirm_password" minlength="8" maxlength="128"/>
             
-                <!-- Afegeix el reCAPTCHA aquí -->
+                <!-- reCAPTCHA -->
                 <div class="g-recaptcha" data-sitekey="6LcimFUqAAAAAFkVryz386ZgATNt1WKQAs55p-xp"></div>
             
                 <input type="submit" name="register" value="Crear compte" />

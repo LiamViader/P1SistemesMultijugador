@@ -8,7 +8,9 @@ $configuration = array(
     '{LOGIN_LOGOUT_TEXT}' => 'Identificar-me',
     '{LOGIN_LOGOUT_URL}'  => '/?page=login',
     '{REGISTER_URL}'      => '/?page=register',
-    '{SITE_NAME}'         => 'Verificacio correu'
+    '{SITE_NAME}'         => 'Verificacio correu',
+    '{METHOD}'            => 'POST',
+    
 );
 
 if (isset($_GET['token'])) {
