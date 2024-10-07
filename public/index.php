@@ -9,7 +9,7 @@ $configuration = array(
     '{FEEDBACK}'          => '',
     '{LOGIN_LOGOUT_TEXT}' => 'Identificar-me',
     '{LOGIN_LOGOUT_URL}'  => '/?page=login',
-    '{METHOD}'            => 'GET', // es veuen els paràmetres a l'URL i a la consola (???)
+    '{METHOD}'            => 'POST', // es veuen els paràmetres a l'URL i a la consola (???)
     '{REGISTER_URL}'      => '/?page=register',
     '{SITE_NAME}'         => 'La meva pàgina',
     '{CURRENT_USER_TEXT}'      => '',
@@ -45,7 +45,13 @@ if (isset($_COOKIE['session_id'])) { // Verificar si hi ha cookie de sessió
 }
 
 // parameter processing
-$parameters = $_GET;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $parameters = $_POST;
+}
+else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $parameters = $_GET;
+}
+
 if (isset($parameters['page'])) {
     if ($parameters['page'] == 'register') {
         $template = 'register';
