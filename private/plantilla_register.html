@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="el_meu.css">
     <!-- per afegir interactivitat a la pàgina -->
     <script defer src="el_meu.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 </head>
 
 <body>
@@ -31,8 +33,13 @@
                 <input id="register_username" type="text" name="user_name" value="{REGISTER_USERNAME}" />
                 <label for="register_password">Contrasenya</label>
                 <input id="register_password" type="password" name="user_password" minlength="8" maxlength="128"/>
+            
+                <!-- Afegeix el reCAPTCHA aquí -->
+                <div class="g-recaptcha" data-sitekey="6LcimFUqAAAAAFkVryz386ZgATNt1WKQAs55p-xp"></div>
+            
                 <input type="submit" name="register" value="Crear compte" />
             </form>
+            
         </section>
         <section>
             <div>
